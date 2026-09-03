@@ -60,3 +60,43 @@ $$d = \sqrt{(x_2 - x_{target})^2 + (y_2 - y_{target})^2}$$
 The step reward $R_t$ is defined as:
 
 $$R_t = -d - 0.01 \sum_{i=1}^{2} |\tau_i|$$
+
+---
+
+## 🧠 Benchmark 1: REINFORCE (Monte Carlo Policy Gradient)
+
+To establish our first baseline, we implement the classic **REINFORCE** algorithm (Williams, 1992). As a fundamental Monte Carlo Policy Gradient method, it provides valuable insights into how pure trial-and-error policy optimization behaves on continuous robotic continuous control.
+
+### 📐 Theory & Formulation
+
+Unlike value-based methods, REINFORCE directly optimizes the parameterized policy $\pi_\theta(a|s)$ using stochastic gradient ascent:
+
+$$J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta} [R(\tau)]$$
+
+By applying the **Policy Gradient Theorem**, the objective gradient is computed over complete trajectories:
+
+$$\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta} \left[ \sum_{t=0}^{T} \nabla_\theta \log \pi_\theta(a_t | s_t) \, G_t \right]$$
+
+where $G_t = \sum_{k=t}^T \gamma^{k-t} R_{k}$ is the discounted return (Monte Carlo return-to-go).
+
+For our continuous action space $\tau \in [-5.0, 5.0]^2$, the policy parameterizes a diagonal Gaussian distribution:
+$$a_t \sim \mathcal{N}\left(\mu_\theta(s_t), \Sigma_\theta(s_t)\right)$$
+
+### 🎥 Agent Performance
+
+<p align="center">
+  <img src="assets/reinforce_eval.gif" alt="REINFORCE 2-DOF Robot Arm" width="550"/>
+  <br>
+  <em>Figure 1: Trained REINFORCE policy controlling the 2-DOF robotic arm to track target coordinates.</em>
+</p>
+
+### 📈 Convergence & Observations
+
+During training (300 episodes), we observe typical Monte Carlo behavior:
+
+```text
+Episode 270/300 | Reward: -212.87 | Avg(50): -247.56 | Loss: -24.8113
+Episode 280/300 | Reward: -250.22 | Avg(50): -234.61 | Loss: 2.1800
+Episode 290/300 | Reward: -207.95 | Avg(50): -241.64 | Loss: -5.8923
+Episode 300/300 | Reward: -298.70 | Avg(50): -244.07 | Loss: 7.3512
+```
