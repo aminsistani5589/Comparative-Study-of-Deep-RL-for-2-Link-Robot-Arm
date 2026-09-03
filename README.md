@@ -100,3 +100,29 @@ Episode 280/300 | Reward: -250.22 | Avg(50): -234.61 | Loss: 2.1800
 Episode 290/300 | Reward: -207.95 | Avg(50): -241.64 | Loss: -5.8923
 Episode 300/300 | Reward: -298.70 | Avg(50): -244.07 | Loss: 7.3512
 ```
+
+### 🚨 The "Disaster" Analysis: Why Did REINFORCE Fail?
+
+As expected for a continuous control robotics task, the vanilla REINFORCE algorithm struggled heavily, leading to unstable learning, erratic joint movements, and ultimately, policy collapse. This "failure" is actually a perfect textbook example of the theoretical limitations of pure Monte Carlo policy gradients. Here is the mathematical and theoretical breakdown of why this disaster happened:
+
+#### 1. The Curse of High Variance (Credit Assignment Problem)
+
+REINFORCE updates the policy based on the full Monte Carlo return:
+$$G_t = \sum_{k=0}^{\infty} \gamma^k R_{t+k+1}$$
+The core issue here is the **Credit Assignment Problem**. If the agent applies a brilliant torque at joint 1 at step $t=10$, but makes a terrible move at $t=50$ that ruins the trajectory, the overall return $G_{10}$ becomes severely degraded. The algorithm will unfairly penalize the _good_ action at $t=10$. In a continuous 2-DOF environment with complex dynamics, this high variance in $G_t$ causes the gradient updates to swing wildly in conflicting directions.
+
+#### 2. Adding a Baseline (And Why It Wasn't Enough)
+
+In a purely vanilla formulation, the gradient estimator is:
+$$\nabla_\theta J(\theta) \approx \nabla_\theta \log \pi_\theta(a|s) \cdot G_t$$
+Multiplying the log probability directly by the raw return $G_t$ means the agent doesn't know if an action was actually _better than average_. To counter this, I implemented a Baseline (a Value function $V(s)$) to calculate the **Advantage** ($A_t = G_t - V(s_t)$) instead of using raw returns.
+
+> 💡 **Implementation Note:** I explicitly coded and tested the "REINFORCE with Baseline" variant. While monitoring the training metrics confirmed that the baseline _successfully and mathematically reduced the gradient variance_, **the overall physical results were still just as bad!** The policy still collapsed. This was a crucial empirical finding: merely reducing variance is entirely insufficient for complex continuous control if we do not also address unbounded step-sizes and chaotic exploration.
+
+#### 3. Catastrophic Gaussian Exploration (Uncorrelated Noise)
+
+Our policy outputs actions sampled from a Gaussian distribution $\mathcal{N}(\mu, \sigma)$. In early training, $\sigma$ is naturally large to encourage exploration. However, independently sampling from a Gaussian at every single time step produces extreme, high-frequency jitter. Because this noise is completely uncorrelated over time, the agent fails to explore smooth or coherent trajectories. Instead, this chaotic sequence of disconnected actions throws the agent into unrecoverable or meaningless states, severely hindering its ability to collect useful trajectory data.
+
+#### 4. Step-Size Sensitivity (No Trust Region)
+
+Vanilla Policy Gradient algorithms have no mechanism to restrict the size of the policy update. A single bad batch of trajectories with extreme returns can produce a massive gradient, throwing the neural network weights $\theta$ off a cliff into a parameter space where $\sigma$ collapses to zero or $\mu$ outputs NaNs. Once the policy falls into this "disaster zone," it cannot recover.
