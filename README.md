@@ -85,7 +85,7 @@ $$a_t \sim \mathcal{N}\left(\mu_\theta(s_t), \Sigma_\theta(s_t)\right)$$
 ### 🎥 Agent Performance
 
 <p align="center">
-  <img src="assets/reinforce_eval.gif" alt="REINFORCE 2-DOF Robot Arm" width="550"/>
+  <img src="https://github.com/aminsistani5589/Comparative-Study-of-Deep-RL-for-2-Link-Robot-Arm/blob/main/GIF/reinforce_policy.gif" alt="REINFORCE 2-DOF Robot Arm" width="550"/>
   <br>
   <em>Figure 1: Trained REINFORCE policy controlling the 2-DOF robotic arm to track target coordinates.</em>
 </p>
