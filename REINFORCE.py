@@ -163,7 +163,10 @@ if __name__ == "__main__":
     # 3. Train policy
     print("🚀 Starting Training (REINFORCE)...")
     rewards = train(env, agent, num_episodes=300)
-    
+    # Save trained policy weights
+    torch.save(agent.policy.state_dict(), "reinforce_policy.pth")
+    print("Model saved to reinforce_policy.pth")
+
     # 4. Plot learning curve
     plot_learning_curve(rewards, algorithm_name="REINFORCE", window=10)
     
