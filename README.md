@@ -153,7 +153,7 @@ $$\nabla_\theta J(\theta) = \mathbb{E}_{s_t \sim \rho^\pi, a_t \sim \pi_\theta} 
 🎥 Agent Performance
 
 <p align="center">
-  <img src="assets/deep_sarsa_eval.gif" alt="Deep SARSA 2-DOF Robot Arm" width="600"/>
+  <img src="https://github.com/aminsistani5589/Comparative-Study-of-Deep-RL-for-2-Link-Robot-Arm/blob/main/GIF/sarsa_animation.gif" alt="Deep SARSA 2-DOF Robot Arm" width="600"/>
   <br>
   <em>Figure 2: Trained Deep SARSA policy attempting to stabilize and navigate the 2-DOF robotic arm to target coordinates.</em>
 </p>
