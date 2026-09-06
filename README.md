@@ -126,3 +126,34 @@ Our policy outputs actions sampled from a Gaussian distribution $\mathcal{N}(\mu
 #### 4. Step-Size Sensitivity (No Trust Region)
 
 Vanilla Policy Gradient algorithms have no mechanism to restrict the size of the policy update. A single bad batch of trajectories with extreme returns can produce a massive gradient, throwing the neural network weights $\theta$ off a cliff into a parameter space where $\sigma$ collapses to zero or $\mu$ outputs NaNs. Once the policy falls into this "disaster zone," it cannot recover.
+
+🧠 Benchmark 2: Deep SARSA (On-Policy Actor-Critic)
+Moving from episodic Monte Carlo methods toward Temporal Difference (TD) learning, we implement **Deep SARSA** for continuous control. While traditional tabular SARSA operates on discrete state-action pairs, extending it to our 2-DOF robotic arm requires an **On-Policy Actor-Critic** architecture with continuous action parameterization.
+
+Unlike the greedy, off-policy nature of Q-learning/DQN, Deep SARSA evaluates the return directly from the transitions executed by the current behavioral policy: $(S_t, A_t, R_{t+1}, S_{t+1}, A_{t+1})$.
+
+📐 Theory & Formulation
+Deep SARSA updates its action-value critic $Q_\phi(s, a)$ by minimizing the single-step bootstrapping TD error:
+
+$$L(\phi) = \mathbb{E}_{(s_t, a_t, r_t, s_{t+1}, a_{t+1}) \sim \pi_\theta} \left[ \left( Q_\phi(s_t, a_t) - y_t \right)^2 \right]$$
+
+where the on-policy TD target $y_t$ incorporates the _actual next action_ $a_{t+1} \sim \pi_\theta(\cdot | s_{t+1})$ sampled directly from the current policy, rather than a greedy maximization ($\max_{a'} Q$):
+
+$$y_t = r_t + \gamma \, Q_{\phi_{\text{target}}}(s_{t+1}, a_{t+1})$$
+
+The policy network (Actor) $\pi_\theta(a|s)$ models a continuous Gaussian distribution $a \sim \mathcal{N}(\mu_\theta(s), \Sigma_\theta(s))$ bounded by physical torque limits. It is optimized via the Deterministic/Stochastic Policy Gradient using the estimated Q-values:
+
+$$\nabla_\theta J(\theta) = \mathbb{E}_{s_t \sim \rho^\pi, a_t \sim \pi_\theta} \left[ \nabla_\theta \log \pi_\theta(a_t | s_t) \, Q_\phi(s_t, a_t) \right]$$
+
+### 🔑 Why Deep SARSA over Monte Carlo?
+
+- **Low Variance via Bootstrapping:** By replacing the high-variance Monte Carlo full return $G_t$ with a 1-step TD estimate ($r_t + \gamma Q$), credit assignment becomes far more localized and stable.
+- **Conservative, Safe Exploration:** Because SARSA optimizes with respect to the _current stochastic policy's behavior_ (including exploration noise), it is inherently more conservative around boundary states than off-policy methods—making it an intriguing benchmark for constrained physical systems.
+
+🎥 Agent Performance
+
+<p align="center">
+  <img src="assets/deep_sarsa_eval.gif" alt="Deep SARSA 2-DOF Robot Arm" width="600"/>
+  <br>
+  <em>Figure 2: Trained Deep SARSA policy attempting to stabilize and navigate the 2-DOF robotic arm to target coordinates.</em>
+</p>
