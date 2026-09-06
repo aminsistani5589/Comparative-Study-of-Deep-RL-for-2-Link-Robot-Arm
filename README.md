@@ -127,7 +127,8 @@ Our policy outputs actions sampled from a Gaussian distribution $\mathcal{N}(\mu
 
 Vanilla Policy Gradient algorithms have no mechanism to restrict the size of the policy update. A single bad batch of trajectories with extreme returns can produce a massive gradient, throwing the neural network weights $\theta$ off a cliff into a parameter space where $\sigma$ collapses to zero or $\mu$ outputs NaNs. Once the policy falls into this "disaster zone," it cannot recover.
 
-🧠 Benchmark 2: Deep SARSA (On-Policy Actor-Critic)
+## 🧠 Benchmark 2: Deep SARSA (On-Policy Actor-Critic)
+
 Moving from episodic Monte Carlo methods toward Temporal Difference (TD) learning, we implement **Deep SARSA** for continuous control. While traditional tabular SARSA operates on discrete state-action pairs, extending it to our 2-DOF robotic arm requires an **On-Policy Actor-Critic** architecture with continuous action parameterization.
 
 Unlike the greedy, off-policy nature of Q-learning/DQN, Deep SARSA evaluates the return directly from the transitions executed by the current behavioral policy: $(S_t, A_t, R_{t+1}, S_{t+1}, A_{t+1})$.
@@ -145,10 +146,16 @@ The policy network (Actor) $\pi_\theta(a|s)$ models a continuous Gaussian distri
 
 $$\nabla_\theta J(\theta) = \mathbb{E}_{s_t \sim \rho^\pi, a_t \sim \pi_\theta} \left[ \nabla_\theta \log \pi_\theta(a_t | s_t) \, Q_\phi(s_t, a_t) \right]$$
 
-### 🔑 Why Deep SARSA over Monte Carlo?
+### 🏗️ Architectural Choice: Why Actor-Critic?
 
-- **Low Variance via Bootstrapping:** By replacing the high-variance Monte Carlo full return $G_t$ with a 1-step TD estimate ($r_t + \gamma Q$), credit assignment becomes far more localized and stable.
-- **Conservative, Safe Exploration:** Because SARSA optimizes with respect to the _current stochastic policy's behavior_ (including exploration noise), it is inherently more conservative around boundary states than off-policy methods—making it an intriguing benchmark for constrained physical systems.
+A fundamental challenge in this implementation is the **continuous action space** $\tau \in [-5.0, 5.0]^2$. In traditional discrete SARSA, the agent selects an action by choosing $a = \arg\max_{a'} Q(s, a')$. However, in a continuous domain, finding this maximum at every single time step is computationally prohibitive as it would require solving an optimization problem within the inner loop of the agent.
+
+To resolve this, we employ an **Actor-Critic architecture**:
+
+1.  **The Actor (Policy Network $\pi_\theta$):** Instead of searching for the best action, we train a dedicated neural network to _parameterize_ the policy. The Actor learns to output the parameters (mean $\mu$ and standard deviation $\sigma$) of a Gaussian distribution, allowing for direct, efficient sampling of continuous torques.
+2.  **The Critic (Value Network $Q_\phi$):** The Critic serves as the learned evaluator. It estimates the $Q$-value of the specific state-action pairs $(s, a)$ actually executed by the Actor.
+
+By combining these, we transform the SARSA update into an **On-Policy Actor-Critic** framework. This allows the agent to use the Critic's gradient to "guide" the Actor, effectively shifting the policy towards actions that yield higher predicted $Q$-values, while maintaining the core SARSA requirement of updating based on the _actual_ next action $a_{t+1}$ sampled from the current policy.
 
 🎥 Agent Performance
 
