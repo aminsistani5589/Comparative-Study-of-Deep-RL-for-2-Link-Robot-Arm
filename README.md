@@ -164,3 +164,21 @@ By combining these, we transform the SARSA update into an **On-Policy Actor-Crit
   <br>
   <em>Figure 2: Trained Deep SARSA policy attempting to stabilize and navigate the 2-DOF robotic arm to target coordinates.</em>
 </p>
+
+### 🗂️ The Paradox of the Replay Buffer in Deep SARSA
+
+You might wonder: _SARSA is strictly an On-Policy algorithm, so why use an Experience Replay Buffer, a technique usually reserved for Off-Policy methods like DQN?_
+
+The answer lies in solving the fundamental clash between pure RL theory and Neural Network dynamics. We use a **Modified Replay Buffer** for two critical reasons:
+
+1. **Breaking Data Correlation:** In Reinforcement Learning, sequential states and actions are highly correlated. Training a neural network step-by-step on this continuous stream leads to heavily biased gradients and catastrophic instability. By storing experiences in a buffer and sampling random mini-batches, we **break the temporal correlation** between data points, allowing the network to learn robust and stable representations.
+
+2. **Preserving On-Policy Integrity (Storing $a_{t+1}$):** To break correlation without ruining SARSA's on-policy nature, we cannot use a standard buffer. Instead of just saving $(s_t, a_t, r_t, s_{t+1})$, we explicitly store the **next action** ($a_{t+1}$) that the policy _actually committed to_ during the episode. Our stored tuple becomes:
+   $$(s_t, a_t, r_t, s_{t+1}, a_{t+1})$$
+
+**The Update Rule:**
+When computing the TD Target during batch updates, we do not sample a new action or take a greedy maximum (like Q-learning). Instead, we plug the explicitly stored $a_{t+1}$ directly into the Critic network:
+
+$$y_t = r_t + \gamma \, Q_{\phi_{\text{target}}}(s_{t+1}, a_{t+1})$$
+
+This engineering trick gives us the best of both worlds: the un-correlated stability of batch training, while strictly obeying SARSA's on-policy mathematics!
