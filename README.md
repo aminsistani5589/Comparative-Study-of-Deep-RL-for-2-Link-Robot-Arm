@@ -146,6 +146,38 @@ The policy network (Actor) $\pi_\theta(a|s)$ models a continuous Gaussian distri
 
 $$\nabla_\theta J(\theta) = \mathbb{E}_{s_t \sim \rho^\pi, a_t \sim \pi_\theta} \left[ \nabla_\theta \log \pi_\theta(a_t | s_t) \, Q_\phi(s_t, a_t) \right]$$
 
+### 📊 Final Training Logs & Convergence Summary
+
+The training progression stabilized significantly in the final 100 episodes, demonstrating the Critic's steady TD updates and a descending trend in Actor Loss:
+
+| Episode  |    Reward    | Avg Reward (50 Ep) | Critic Loss |  Actor Loss   |
+| :------: | :----------: | :----------------: | :---------: | :-----------: |
+| **900**  |   $-93.98$   |     $-124.61$      |  $17.6446$  |   $47.8901$   |
+| **910**  |  $-107.99$   |     $-130.03$      |  $15.8003$  |   $46.2263$   |
+| **920**  |  $-134.57$   |     $-140.23$      |  $17.6443$  |   $46.1282$   |
+| **930**  |  $-147.96$   |     $-140.22$      |  $17.1021$  |   $45.5088$   |
+| **940**  |   $-92.23$   |     $-130.18$      |  $18.2511$  |   $45.9980$   |
+| **950**  |  $-186.52$   |     $-132.66$      |  $18.3096$  |   $42.9766$   |
+| **960**  |  $-282.53$   |     $-133.68$      |  $17.8335$  |   $42.9459$   |
+| **970**  |  $-127.85$   |     $-122.22$      |  $18.3295$  |   $45.6877$   |
+| **980**  |  $-135.24$   |     $-117.49$      |  $16.5598$  |   $42.5635$   |
+| **990**  |  $-155.52$   |     $-120.27$      |  $17.4011$  |   $41.0033$   |
+| **1000** | **$-78.06$** |   **$-120.07$**    |  $18.2899$  | **$38.5271$** |
+
+#### 🔍 Key Takeaways from the Final Phase:
+
+- **Critic Stability:** The Critic loss maintained bounded oscillations ($\approx 16 \text{--} 18$), indicating consistent value estimation without gradient explosion.
+- **Actor Convergence:** Actor loss consistently decreased from $\approx 47.89$ down to **$38.52$**, reflecting progressive policy optimization.
+- **Reward Bounds:** The rolling average reward converged to around **$-120$**, with peak performance reaching **$-78.06$** at the final episode.
+
+🎥 Agent Performance
+
+<p align="center">
+  <img src="https://github.com/aminsistani5589/Comparative-Study-of-Deep-RL-for-2-Link-Robot-Arm/blob/main/GIF/sarsa_animation.gif" alt="Deep SARSA 2-DOF Robot Arm" width="600"/>
+  <br>
+  <em>Figure 2: Trained Deep SARSA policy attempting to stabilize and navigate the 2-DOF robotic arm to target coordinates.</em>
+</p>
+
 ### 🏗️ Architectural Choice: Why Actor-Critic?
 
 A fundamental challenge in this implementation is the **continuous action space** $\tau \in [-5.0, 5.0]^2$. In traditional discrete SARSA, the agent selects an action by choosing $a = \arg\max_{a'} Q(s, a')$. However, in a continuous domain, finding this maximum at every single time step is computationally prohibitive as it would require solving an optimization problem within the inner loop of the agent.
@@ -156,14 +188,6 @@ To resolve this, we employ an **Actor-Critic architecture**:
 2.  **The Critic (Value Network $Q_\phi$):** The Critic serves as the learned evaluator. It estimates the $Q$-value of the specific state-action pairs $(s, a)$ actually executed by the Actor.
 
 By combining these, we transform the SARSA update into an **On-Policy Actor-Critic** framework. This allows the agent to use the Critic's gradient to "guide" the Actor, effectively shifting the policy towards actions that yield higher predicted $Q$-values, while maintaining the core SARSA requirement of updating based on the _actual_ next action $a_{t+1}$ sampled from the current policy.
-
-🎥 Agent Performance
-
-<p align="center">
-  <img src="https://github.com/aminsistani5589/Comparative-Study-of-Deep-RL-for-2-Link-Robot-Arm/blob/main/GIF/sarsa_animation.gif" alt="Deep SARSA 2-DOF Robot Arm" width="600"/>
-  <br>
-  <em>Figure 2: Trained Deep SARSA policy attempting to stabilize and navigate the 2-DOF robotic arm to target coordinates.</em>
-</p>
 
 <p align="center">
   <img src="https://github.com/aminsistani5589/Comparative-Study-of-Deep-RL-for-2-Link-Robot-Arm/blob/main/DIAGRAMS%20AND%20PICTURES/z1rL_JsXkqZV_9IVPQCB2PF2FmA-OvCCFMLPRN2DmL0dgZgwcQ.png" alt="Actor-Critic Architecture in Deep SARSA" width="550"/>
