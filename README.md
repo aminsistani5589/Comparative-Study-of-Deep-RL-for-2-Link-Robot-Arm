@@ -257,10 +257,10 @@ REINFORCE relies on Monte Carlo (MC) sampling. Its policy gradient update uses t
 
 $$ \nabla*\theta J(\theta) = \mathbb{E}*{\pi} \left[ \sum_{t=0}^{T} \nabla_\theta \log \pi_\theta(a_t|s_t) \cdot G_t \right] $$
 
-_(where $G_t = \sum_{k=0}^{\infty} \gamma^k r_{t+k}$)_
-
 > [!IMPORTANT] > **The Variance Problem:** The variance of $G_t$ accumulates over the entire trajectory:
+>
 > $$ \text{Var}(G*t) = \text{Var} \left( r_t + \gamma r*{t+1} + \gamma^2 r\_{t+2} + \dots \right) $$
+>
 > In a highly sensitive robotic arm environment, a single bad action at step $t=50$ can ruin the trajectory, punishing all good actions that happened before it. This leads to massive variance and destructive gradient updates.
 
 Deep SARSA, however, uses **Temporal Difference (TD) learning**. By utilizing a Critic ($Q_\phi$), it replaces the high-variance $G_t$ with a low-variance bootstrapped estimation:
